@@ -1,11 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Flags from 'react-world-flags';
+import { Icon } from 'carbon-components-react';
+import { iconDelete } from 'carbon-icons';
 
 import Avatar from '../Avatar';
 import { COUNTRIES } from '../constants';
 
-const TableBody = ({ players }) => {
+const TableBody = ({ players, deletePlayer }) => {
   return (
     <table
       id="player-table-body"
@@ -35,6 +37,15 @@ const TableBody = ({ players }) => {
                 {country}
               </div>
             </td>
+            <td role="gridcell" className="table__delete">
+              <Icon
+                className="action-icon"
+                description="Delete Player"
+                icon={iconDelete}
+                onClick={() => deletePlayer(id)}
+                role="button"
+              />
+            </td>
           </tr>
         ))}
       </tbody>
@@ -52,6 +63,7 @@ TableBody.propTypes = {
       imageUrl: PropTypes.string.isRequired,
     })
   ).isRequired,
+  deletePlayer: PropTypes.func.isRequired,
 };
 
 export default TableBody;

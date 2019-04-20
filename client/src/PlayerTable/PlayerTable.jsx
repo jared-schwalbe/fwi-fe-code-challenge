@@ -5,7 +5,7 @@ import { connectAdvanced } from 'react-redux';
 import shallowEqual from 'shallowequal';
 
 import { COUNTRIES } from '../constants';
-import { fetchPlayersSuccess } from '../appState/actions';
+import { fetchPlayersSuccess, deletePlayerSuccess } from '../appState/actions';
 
 import './PlayerTable.scss';
 import TableHeader from './TableHeader';
@@ -23,7 +23,13 @@ class PlayerTable extends PureComponent {
       })
     ).isRequired,
     fetchPlayersSuccess: PropTypes.func.isRequired,
+    deletePlayerSuccess: PropTypes.func.isRequired,
   };
+
+  constructor(props) {
+    super(props);
+    this.deletePlayer = this.deletePlayer.bind(this);
+  }
 
   componentDidMount() {
     const { fetchPlayersSuccess } = this.props;
@@ -44,6 +50,22 @@ class PlayerTable extends PureComponent {
       });
   }
 
+  deletePlayer(id) {
+    const { deletePlayerSuccess } = this.props;
+    fetch(`http://localhost:3001/players/${id}`, {
+      headers: {
+        Accept: 'application/json',
+      },
+      method: 'delete',
+    }).then(response => {
+      if (response.status === 204) {
+        deletePlayerSuccess(id);
+        return response;
+      }
+      throw new Error(`Player ${id} was not deleted.`);
+    });
+  }
+
   render() {
     const { players } = this.props;
     return (
@@ -54,7 +76,7 @@ class PlayerTable extends PureComponent {
         className="player-table"
       >
         <TableHeader />
-        <TableBody players={players} />
+        <TableBody deletePlayer={this.deletePlayer} players={players} />
       </div>
     );
   }
@@ -62,7 +84,13 @@ class PlayerTable extends PureComponent {
 
 export default connectAdvanced(dispatch => {
   let result;
-  const actions = bindActionCreators({ fetchPlayersSuccess }, dispatch);
+  const actions = bindActionCreators(
+    {
+      fetchPlayersSuccess,
+      deletePlayerSuccess,
+    },
+    dispatch
+  );
 
   return (state, props) => {
     const players = state.playerIds.map(id => state.players[id]);

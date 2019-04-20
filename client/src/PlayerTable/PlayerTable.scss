@@ -64,8 +64,17 @@ $header-height: 2.5rem;
   }
 
   &__native {
-    width: 6rem;
+    width: 5rem;
   }
+
+  &__delete {
+    width: 4rem;
+    text-align: center;
+  }
+}
+
+.action-icon {
+  cursor: pointer;
 }
 
 .country {
