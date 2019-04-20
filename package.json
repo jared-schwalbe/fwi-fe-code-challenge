@@ -31,5 +31,10 @@
       "prettier --write",
       "git add"
     ]
+  },
+  "dependencies": {
+    "carbon-components": "^10.1.0",
+    "carbon-components-react": "^7.1.0",
+    "carbon-icons": "^7.0.7"
   }
 }
