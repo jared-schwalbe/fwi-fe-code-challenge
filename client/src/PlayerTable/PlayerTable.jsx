@@ -5,30 +5,29 @@ import { connectAdvanced } from 'react-redux';
 import shallowEqual from 'shallowequal';
 
 import { COUNTRIES } from '../constants';
-import { fetchPlayersSuccess, deletePlayerSuccess } from '../appState/actions';
+import {
+  fetchPlayersSuccess,
+  editPlayerSuccess,
+  deletePlayerSuccess,
+} from '../appState/actions';
 
 import './PlayerTable.scss';
 import TableHeader from './TableHeader';
 import TableBody from './TableBody';
+import PlayerModal from './PlayerModal';
 
 class PlayerTable extends PureComponent {
-  static propTypes = {
-    players: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        country: PropTypes.oneOf(Object.keys(COUNTRIES)),
-        winnings: PropTypes.number.isRequired,
-        imageUrl: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-    fetchPlayersSuccess: PropTypes.func.isRequired,
-    deletePlayerSuccess: PropTypes.func.isRequired,
-  };
-
   constructor(props) {
     super(props);
+
+    this.editPlayer = this.editPlayer.bind(this);
     this.deletePlayer = this.deletePlayer.bind(this);
+    this.togglePlayerModal = this.togglePlayerModal.bind(this);
+
+    this.state = {
+      playerToEdit: null,
+      showPlayerModal: false,
+    };
   }
 
   componentDidMount() {
@@ -50,6 +49,23 @@ class PlayerTable extends PureComponent {
       });
   }
 
+  editPlayer(player) {
+    const { editPlayerSuccess } = this.props;
+    fetch(`http://localhost:3001/players/${player.id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'PATCH',
+      body: JSON.stringify(player),
+    }).then(response => {
+      if (response.status === 200) {
+        editPlayerSuccess(player);
+        return response;
+      }
+      throw new Error(`Player ${player.id} was not updated.`);
+    });
+  }
+
   deletePlayer(id) {
     const { deletePlayerSuccess } = this.props;
     fetch(`http://localhost:3001/players/${id}`, {
@@ -66,8 +82,17 @@ class PlayerTable extends PureComponent {
     });
   }
 
+  togglePlayerModal(show, player = null) {
+    this.setState({
+      showPlayerModal: show,
+      playerToEdit: player,
+    });
+  }
+
   render() {
     const { players } = this.props;
+    const { playerToEdit, showPlayerModal } = this.state;
+
     return (
       <div
         id="player-table-grid"
@@ -76,17 +101,44 @@ class PlayerTable extends PureComponent {
         className="player-table"
       >
         <TableHeader />
-        <TableBody deletePlayer={this.deletePlayer} players={players} />
+        <TableBody
+          deletePlayer={this.deletePlayer}
+          editPlayer={player => this.togglePlayerModal(true, player)}
+          players={players}
+        />
+        {showPlayerModal && (
+          <PlayerModal
+            onClose={() => this.togglePlayerModal(false)}
+            onSubmit={player => this.editPlayer(player)}
+            player={playerToEdit}
+          />
+        )}
       </div>
     );
   }
 }
+
+PlayerTable.propTypes = {
+  players: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      country: PropTypes.oneOf(Object.keys(COUNTRIES)),
+      winnings: PropTypes.number.isRequired,
+      imageUrl: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  fetchPlayersSuccess: PropTypes.func.isRequired,
+  editPlayerSuccess: PropTypes.func.isRequired,
+  deletePlayerSuccess: PropTypes.func.isRequired,
+};
 
 export default connectAdvanced(dispatch => {
   let result;
   const actions = bindActionCreators(
     {
       fetchPlayersSuccess,
+      editPlayerSuccess,
       deletePlayerSuccess,
     },
     dispatch

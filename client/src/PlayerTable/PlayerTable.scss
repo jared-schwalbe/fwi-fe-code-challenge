@@ -36,6 +36,11 @@ $header-height: 2.5rem;
     &:not(:last-child) {
       border-bottom: 1px solid $pearl;
     }
+
+    td {
+      padding: 0.5rem;
+      vertical-align: middle;
+    }
   }
 
   &__header {
@@ -64,12 +69,15 @@ $header-height: 2.5rem;
   }
 
   &__native {
-    width: 5rem;
+    width: 7rem;
+  }
+
+  &__edit {
+    width: 3rem;
   }
 
   &__delete {
-    width: 4rem;
-    text-align: center;
+    width: 3rem;
   }
 }
 

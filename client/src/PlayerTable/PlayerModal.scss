@@ -1,0 +1,30 @@
+$input-spacing: 1.5rem;
+
+.player-modal {
+  .wrapper {
+    display: flex;
+    margin-bottom: $input-spacing;
+  }
+
+  &__name {
+    margin-right: $input-spacing;
+    width: 15rem;
+  }
+
+  &__winnings {
+    width: 8.5rem;
+  }
+
+  &__country {
+    margin-bottom: $input-spacing;
+    width: 25rem;
+  }
+
+  &__image-url {
+    width: 25rem;
+  }
+}
+
+.bx--text-input {
+  min-width: 5rem;
+}
