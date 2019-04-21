@@ -35,12 +35,15 @@ class PlayerTable extends PureComponent {
     this.editPlayer = this.editPlayer.bind(this);
     this.deletePlayer = this.deletePlayer.bind(this);
     this.handlePaginationChange = this.handlePaginationChange.bind(this);
+    this.handleCustomSort = this.handleCustomSort.bind(this);
     this.togglePlayerModal = this.togglePlayerModal.bind(this);
     this.submitModal = this.submitModal.bind(this);
 
     this.state = {
       page: 1,
       pageSize: 10,
+      sortBy: null,
+      sortOrder: null,
       playerToEdit: null,
       showPlayerModal: false,
     };
@@ -52,11 +55,16 @@ class PlayerTable extends PureComponent {
 
   fetchPlayers() {
     const { fetchPlayersSuccess } = this.props;
-    const { pageSize, page } = this.state;
+    const { pageSize, page, sortBy, sortOrder } = this.state;
+
     const size = pageSize;
     const from = pageSize * (page - 1);
+    let url = `http://localhost:3001/players?size=${size}&from=${from}`;
+    if (sortBy && sortOrder) {
+      url += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+    }
 
-    fetch(`http://localhost:3001/players?size=${size}&from=${from}`, {
+    fetch(url, {
       headers: {
         Accept: 'application/json',
       },
@@ -169,15 +177,36 @@ class PlayerTable extends PureComponent {
     });
   }
 
-  handlePaginationChange(event) {
-    const { page, pageSize } = event;
+  // the DataTable doesn't really allow server side sorting so we'll
+  // hack it by fetching based on the arrow direction
+  handleCustomSort(evt, sortBy) {
+    const arrow = evt.target
+      .closest('[aria-sort]')
+      .getElementsByClassName('bx--table-sort-v2__icon')[0]
+      .getAttribute('aria-label');
+
+    let sortOrder = null;
+    if (arrow.includes('ascending')) {
+      sortOrder = 'asc';
+    } else if (arrow.includes('descending')) {
+      sortOrder = 'desc';
+    } else {
+      return null;
+    }
+
     this.setState(
       {
-        page,
-        pageSize,
+        page: 1,
+        sortBy,
+        sortOrder,
       },
       () => this.fetchPlayers()
     );
+  }
+
+  handlePaginationChange(event) {
+    const { page, pageSize } = event;
+    this.setState({ page, pageSize }, () => this.fetchPlayers());
   }
 
   togglePlayerModal(show, player = null) {
@@ -202,10 +231,10 @@ class PlayerTable extends PureComponent {
     const { page, pageSize, playerToEdit, showPlayerModal } = this.state;
 
     const headers = [
-      { key: 'imageUrl', header: '' },
-      { key: 'name', header: 'Player' },
-      { key: 'winnings', header: 'Winnings' },
-      { key: 'country', header: 'Native of' },
+      { key: 'imageUrl', header: '', isSortable: false },
+      { key: 'name', header: 'Player', isSortable: true },
+      { key: 'winnings', header: 'Winnings', isSortable: true },
+      { key: 'country', header: 'Native of', isSortable: true },
     ];
 
     return (
@@ -224,7 +253,15 @@ class PlayerTable extends PureComponent {
                 <TableHead>
                   <TableRow>
                     {headers.map(header => (
-                      <TableHeader {...getHeaderProps({ header })}>
+                      <TableHeader
+                        {...getHeaderProps({
+                          header,
+                          onClick: evt =>
+                            this.handleCustomSort(evt, header.key),
+                        })}
+                        isSortable={header.isSortable && rows.length > 0}
+                        key={header.key}
+                      >
                         {header.header}
                       </TableHeader>
                     ))}
