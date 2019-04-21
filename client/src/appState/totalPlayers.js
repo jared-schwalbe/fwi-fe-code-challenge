@@ -5,16 +5,16 @@ import {
   DELETE_PLAYER_SUCCESS,
 } from './constants';
 
-export default function playerIds(state = [], action) {
+export default function totalPlayers(state = 0, action) {
   switch (action.type) {
     case FETCH_PLAYERS_SUCCESS:
-      return action.payload.data.players.map(player => player.id);
+      return action.payload.data.total;
     case CREATE_PLAYER_SUCCESS:
-      return state.concat([action.payload.player.id]);
+      return state++;
     case EDIT_PLAYER_SUCCESS:
       return state;
     case DELETE_PLAYER_SUCCESS:
-      return state.filter(playerId => playerId !== action.payload.id);
+      return state--;
     default:
       return state;
   }

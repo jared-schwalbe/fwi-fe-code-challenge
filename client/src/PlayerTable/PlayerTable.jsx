@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connectAdvanced } from 'react-redux';
 import shallowEqual from 'shallowequal';
-import { Button, DataTable } from 'carbon-components-react';
+import { Button, DataTable, PaginationV2 } from 'carbon-components-react';
 
 import { COUNTRIES } from '../constants';
 import {
@@ -33,17 +33,29 @@ class PlayerTable extends PureComponent {
     this.createPlayer = this.createPlayer.bind(this);
     this.editPlayer = this.editPlayer.bind(this);
     this.deletePlayer = this.deletePlayer.bind(this);
+    this.handlePaginationChange = this.handlePaginationChange.bind(this);
     this.togglePlayerModal = this.togglePlayerModal.bind(this);
+    this.submitModal = this.submitModal.bind(this);
 
     this.state = {
+      page: 1,
+      pageSize: 10,
       playerToEdit: null,
       showPlayerModal: false,
     };
   }
 
   componentDidMount() {
+    this.fetchPlayers();
+  }
+
+  fetchPlayers() {
     const { fetchPlayersSuccess } = this.props;
-    fetch('http://localhost:3001/players', {
+    const { pageSize, page } = this.state;
+    const size = pageSize;
+    const from = pageSize * (page - 1);
+
+    fetch(`http://localhost:3001/players?size=${size}&from=${from}`, {
       headers: {
         Accept: 'application/json',
       },
@@ -52,8 +64,8 @@ class PlayerTable extends PureComponent {
         return response.json();
       })
       .then(data => {
-        if (data && data.players) {
-          fetchPlayersSuccess(data.players);
+        if (data) {
+          fetchPlayersSuccess(data);
           return data;
         }
         throw new Error(data.message);
@@ -62,6 +74,7 @@ class PlayerTable extends PureComponent {
 
   createPlayer(player) {
     const { createPlayerSuccess } = this.props;
+
     fetch(`http://localhost:3001/players`, {
       headers: {
         Accept: 'application/json',
@@ -79,6 +92,7 @@ class PlayerTable extends PureComponent {
       .then(data => {
         if (data) {
           createPlayerSuccess(data);
+          this.fetchPlayers();
           return data;
         }
         throw new Error(`New player was not created.`);
@@ -87,6 +101,7 @@ class PlayerTable extends PureComponent {
 
   editPlayer(player) {
     const { editPlayerSuccess } = this.props;
+
     fetch(`http://localhost:3001/players/${player.id}`, {
       headers: {
         'Content-Type': 'application/json',
@@ -103,16 +118,39 @@ class PlayerTable extends PureComponent {
   }
 
   deletePlayer(id) {
-    const { deletePlayerSuccess } = this.props;
+    const { deletePlayerSuccess, players } = this.props;
+    const { page } = this.state;
+
     fetch(`http://localhost:3001/players/${id}`, {
       method: 'DELETE',
     }).then(response => {
       if (response.status === 204) {
         deletePlayerSuccess(id);
+        if (players.length <= 1 && page > 1) {
+          this.setState(
+            prevState => ({
+              page: prevState.page - 1,
+            }),
+            () => this.fetchPlayers()
+          );
+        } else {
+          this.fetchPlayers();
+        }
         return response;
       }
       throw new Error(`Player ${id} was not deleted.`);
     });
+  }
+
+  handlePaginationChange(event) {
+    const { page, pageSize } = event;
+    this.setState(
+      {
+        page,
+        pageSize,
+      },
+      () => this.fetchPlayers()
+    );
   }
 
   togglePlayerModal(show, player = null) {
@@ -133,8 +171,8 @@ class PlayerTable extends PureComponent {
   }
 
   render() {
-    const { players } = this.props;
-    const { playerToEdit, showPlayerModal } = this.state;
+    const { players, totalPlayers } = this.props;
+    const { page, pageSize, playerToEdit, showPlayerModal } = this.state;
 
     const headers = [
       { key: 'imageUrl', header: '' },
@@ -185,10 +223,19 @@ class PlayerTable extends PureComponent {
           )}
           rows={players}
         />
+        {totalPlayers && (
+          <PaginationV2
+            onChange={this.handlePaginationChange}
+            page={page}
+            pageSize={pageSize}
+            pageSizes={[10, 25, 50]}
+            totalItems={totalPlayers}
+          />
+        )}
         {showPlayerModal && (
           <PlayerModal
             onClose={() => this.togglePlayerModal(false)}
-            onSubmit={player => this.submitModal(player)}
+            onSubmit={this.submitModal}
             player={playerToEdit}
           />
         )}
@@ -207,6 +254,7 @@ PlayerTable.propTypes = {
       imageUrl: PropTypes.string.isRequired,
     })
   ).isRequired,
+  totalPlayers: PropTypes.number.isRequired,
   fetchPlayersSuccess: PropTypes.func.isRequired,
   createPlayerSuccess: PropTypes.func.isRequired,
   editPlayerSuccess: PropTypes.func.isRequired,
@@ -227,8 +275,9 @@ export default connectAdvanced(dispatch => {
 
   return (state, props) => {
     const players = state.playerIds.map(id => state.players[id]);
+    const totalPlayers = state.totalPlayers;
 
-    const nextResult = { ...props, ...actions, players };
+    const nextResult = { ...props, ...actions, players, totalPlayers };
 
     if (!shallowEqual(result, nextResult)) {
       result = nextResult;

@@ -5,8 +5,8 @@ import {
   DELETE_PLAYER_SUCCESS,
 } from './constants';
 
-export function fetchPlayersSuccess(players) {
-  return { type: FETCH_PLAYERS_SUCCESS, payload: { players } };
+export function fetchPlayersSuccess(data) {
+  return { type: FETCH_PLAYERS_SUCCESS, payload: { data } };
 }
 
 export function createPlayerSuccess(player) {
