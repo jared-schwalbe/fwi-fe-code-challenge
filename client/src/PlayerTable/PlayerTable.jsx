@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connectAdvanced } from 'react-redux';
 import shallowEqual from 'shallowequal';
+import { DataTable } from 'carbon-components-react';
 
 import { COUNTRIES } from '../constants';
 import {
@@ -12,9 +13,17 @@ import {
 } from '../appState/actions';
 
 import './PlayerTable.scss';
-import TableHeader from './TableHeader';
-import TableBody from './TableBody';
+import PlayerTableRow from './PlayerTableRow';
 import PlayerModal from './PlayerModal';
+
+const {
+  TableContainer,
+  Table,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableHeader,
+} = DataTable;
 
 class PlayerTable extends PureComponent {
   constructor(props) {
@@ -93,18 +102,48 @@ class PlayerTable extends PureComponent {
     const { players } = this.props;
     const { playerToEdit, showPlayerModal } = this.state;
 
+    const headers = [
+      { key: 'imageUrl', header: '' },
+      { key: 'name', header: 'Player' },
+      { key: 'winnings', header: 'Winnings' },
+      { key: 'country', header: 'Native of' },
+    ];
+
     return (
-      <div
-        id="player-table-grid"
-        role="grid"
-        aria-label="Poker Players"
-        className="player-table"
-      >
-        <TableHeader />
-        <TableBody
-          deletePlayer={this.deletePlayer}
-          editPlayer={player => this.togglePlayerModal(true, player)}
-          players={players}
+      <div className="player-table">
+        <DataTable
+          headers={headers}
+          render={({ getHeaderProps, headers, rows }) => (
+            <TableContainer>
+              <Table zebra={false}>
+                <TableHead>
+                  <TableRow>
+                    {headers.map(header => (
+                      <TableHeader {...getHeaderProps({ header })}>
+                        {header.header}
+                      </TableHeader>
+                    ))}
+                    <TableHeader />
+                    <TableHeader />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {rows.map(row => {
+                    const player = players.find(player => player.id === row.id);
+                    return (
+                      <PlayerTableRow
+                        cells={row.cells}
+                        key={row.id}
+                        onEdit={() => this.togglePlayerModal(true, player)}
+                        onDelete={() => this.deletePlayer(row.id)}
+                      />
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+          rows={players}
         />
         {showPlayerModal && (
           <PlayerModal
