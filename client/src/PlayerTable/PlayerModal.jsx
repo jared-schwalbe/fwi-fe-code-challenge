@@ -25,7 +25,13 @@ class PlayerModal extends PureComponent {
       winnings: props.player ? props.player.winnings : '',
       country: props.player ? props.player.country : '',
       imageUrl: props.player ? props.player.imageUrl : '',
-      invalidValues: {},
+      invalidValues: props.player
+        ? {}
+        : {
+            name: 'Required',
+            winnings: 'Required',
+            country: 'Required',
+          },
     };
   }
 

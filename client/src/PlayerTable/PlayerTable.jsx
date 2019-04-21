@@ -3,11 +3,12 @@ import PropTypes from 'prop-types';
 import { bindActionCreators } from 'redux';
 import { connectAdvanced } from 'react-redux';
 import shallowEqual from 'shallowequal';
-import { DataTable } from 'carbon-components-react';
+import { Button, DataTable } from 'carbon-components-react';
 
 import { COUNTRIES } from '../constants';
 import {
   fetchPlayersSuccess,
+  createPlayerSuccess,
   editPlayerSuccess,
   deletePlayerSuccess,
 } from '../appState/actions';
@@ -29,6 +30,7 @@ class PlayerTable extends PureComponent {
   constructor(props) {
     super(props);
 
+    this.createPlayer = this.createPlayer.bind(this);
     this.editPlayer = this.editPlayer.bind(this);
     this.deletePlayer = this.deletePlayer.bind(this);
     this.togglePlayerModal = this.togglePlayerModal.bind(this);
@@ -50,11 +52,36 @@ class PlayerTable extends PureComponent {
         return response.json();
       })
       .then(data => {
-        if (data) {
-          fetchPlayersSuccess(data);
+        if (data && data.players) {
+          fetchPlayersSuccess(data.players);
           return data;
         }
         throw new Error(data.message);
+      });
+  }
+
+  createPlayer(player) {
+    const { createPlayerSuccess } = this.props;
+    fetch(`http://localhost:3001/players`, {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify(player),
+    })
+      .then(response => {
+        if (response.status === 201) {
+          return response.json();
+        }
+        throw new Error(`New player was not created.`);
+      })
+      .then(data => {
+        if (data) {
+          createPlayerSuccess(data);
+          return data;
+        }
+        throw new Error(`New player was not created.`);
       });
   }
 
@@ -78,10 +105,7 @@ class PlayerTable extends PureComponent {
   deletePlayer(id) {
     const { deletePlayerSuccess } = this.props;
     fetch(`http://localhost:3001/players/${id}`, {
-      headers: {
-        Accept: 'application/json',
-      },
-      method: 'delete',
+      method: 'DELETE',
     }).then(response => {
       if (response.status === 204) {
         deletePlayerSuccess(id);
@@ -98,6 +122,16 @@ class PlayerTable extends PureComponent {
     });
   }
 
+  submitModal(player) {
+    const { playerToEdit } = this.state;
+
+    if (playerToEdit) {
+      this.editPlayer(player);
+    } else {
+      this.createPlayer(player);
+    }
+  }
+
   render() {
     const { players } = this.props;
     const { playerToEdit, showPlayerModal } = this.state;
@@ -111,6 +145,12 @@ class PlayerTable extends PureComponent {
 
     return (
       <div className="player-table">
+        <div className="player-table__toolbar">
+          <span className="title">Poker Players Table</span>
+          <Button onClick={() => this.togglePlayerModal(true)}>
+            Add Player
+          </Button>
+        </div>
         <DataTable
           headers={headers}
           render={({ getHeaderProps, headers, rows }) => (
@@ -148,7 +188,7 @@ class PlayerTable extends PureComponent {
         {showPlayerModal && (
           <PlayerModal
             onClose={() => this.togglePlayerModal(false)}
-            onSubmit={player => this.editPlayer(player)}
+            onSubmit={player => this.submitModal(player)}
             player={playerToEdit}
           />
         )}
@@ -168,6 +208,7 @@ PlayerTable.propTypes = {
     })
   ).isRequired,
   fetchPlayersSuccess: PropTypes.func.isRequired,
+  createPlayerSuccess: PropTypes.func.isRequired,
   editPlayerSuccess: PropTypes.func.isRequired,
   deletePlayerSuccess: PropTypes.func.isRequired,
 };
@@ -177,6 +218,7 @@ export default connectAdvanced(dispatch => {
   const actions = bindActionCreators(
     {
       fetchPlayersSuccess,
+      createPlayerSuccess,
       editPlayerSuccess,
       deletePlayerSuccess,
     },

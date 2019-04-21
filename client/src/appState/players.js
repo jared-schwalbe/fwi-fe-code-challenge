@@ -1,14 +1,21 @@
 import {
   FETCH_PLAYERS_SUCCESS,
+  CREATE_PLAYER_SUCCESS,
   EDIT_PLAYER_SUCCESS,
   DELETE_PLAYER_SUCCESS,
 } from './constants';
 
-function mergePlayers(state, { players }) {
+function mergePlayers(state, players) {
   const newState = { ...state };
   players.forEach(player => {
     newState[player.id] = player;
   });
+  return newState;
+}
+
+function createPlayer(state, player) {
+  const newState = { ...state };
+  newState[player.id] = player;
   return newState;
 }
 
@@ -27,7 +34,9 @@ function removePlayer(state, id) {
 export default function players(state = {}, action) {
   switch (action.type) {
     case FETCH_PLAYERS_SUCCESS:
-      return mergePlayers(state, action.payload.data);
+      return mergePlayers(state, action.payload.players);
+    case CREATE_PLAYER_SUCCESS:
+      return createPlayer(state, action.payload.player);
     case EDIT_PLAYER_SUCCESS:
       return editPlayer(state, action.payload.player);
     case DELETE_PLAYER_SUCCESS:
