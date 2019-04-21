@@ -1,9 +1,12 @@
 $input-spacing: 1.5rem;
 
 .player-modal {
-  .wrapper {
-    display: flex;
+  .input-wrapper {
     margin-bottom: $input-spacing;
+  }
+
+  .row {
+    display: flex;
   }
 
   &__name {
@@ -12,11 +15,11 @@ $input-spacing: 1.5rem;
   }
 
   &__winnings {
+    margin: 0;
     width: 8.5rem;
   }
 
   &__country {
-    margin-bottom: $input-spacing;
     width: 25rem;
   }
 
