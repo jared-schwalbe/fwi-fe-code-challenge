@@ -3,6 +3,8 @@ import {
   CREATE_PLAYER_SUCCESS,
   EDIT_PLAYER_SUCCESS,
   DELETE_PLAYER_SUCCESS,
+  ADD_TOAST,
+  REMOVE_TOAST,
 } from './constants';
 
 export function fetchPlayersSuccess(data) {
@@ -19,4 +21,12 @@ export function editPlayerSuccess(player) {
 
 export function deletePlayerSuccess(id) {
   return { type: DELETE_PLAYER_SUCCESS, payload: { id } };
+}
+
+export function addToast(options) {
+  return { type: ADD_TOAST, payload: { options } };
+}
+
+export function removeToast(id) {
+  return { type: REMOVE_TOAST, payload: { id } };
 }

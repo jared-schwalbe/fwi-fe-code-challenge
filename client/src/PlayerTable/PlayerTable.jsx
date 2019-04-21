@@ -11,6 +11,7 @@ import {
   createPlayerSuccess,
   editPlayerSuccess,
   deletePlayerSuccess,
+  addToast,
 } from '../appState/actions';
 
 import './PlayerTable.scss';
@@ -73,7 +74,7 @@ class PlayerTable extends PureComponent {
   }
 
   createPlayer(player) {
-    const { createPlayerSuccess } = this.props;
+    const { createPlayerSuccess, addToast } = this.props;
 
     fetch(`http://localhost:3001/players`, {
       headers: {
@@ -87,20 +88,28 @@ class PlayerTable extends PureComponent {
         if (response.status === 201) {
           return response.json();
         }
-        throw new Error(`New player was not created.`);
+        addToast({
+          title: 'Error',
+          subtitle: 'There was an error when adding a new player.',
+          kind: 'error',
+        });
       })
       .then(data => {
         if (data) {
           createPlayerSuccess(data);
+          addToast({
+            title: 'Success',
+            subtitle: 'New player was successfully added.',
+            kind: 'success',
+          });
           this.fetchPlayers();
           return data;
         }
-        throw new Error(`New player was not created.`);
       });
   }
 
   editPlayer(player) {
-    const { editPlayerSuccess } = this.props;
+    const { editPlayerSuccess, addToast } = this.props;
 
     fetch(`http://localhost:3001/players/${player.id}`, {
       headers: {
@@ -111,14 +120,23 @@ class PlayerTable extends PureComponent {
     }).then(response => {
       if (response.status === 200) {
         editPlayerSuccess(player);
+        addToast({
+          title: 'Success',
+          subtitle: `Player ${player.id} was successfully updated.`,
+          kind: 'success',
+        });
         return response;
       }
-      throw new Error(`Player ${player.id} was not updated.`);
+      addToast({
+        title: 'Error',
+        subtitle: `There was an error when updating player ${player.id}.`,
+        kind: 'error',
+      });
     });
   }
 
   deletePlayer(id) {
-    const { deletePlayerSuccess, players } = this.props;
+    const { deletePlayerSuccess, players, addToast } = this.props;
     const { page } = this.state;
 
     fetch(`http://localhost:3001/players/${id}`, {
@@ -126,6 +144,11 @@ class PlayerTable extends PureComponent {
     }).then(response => {
       if (response.status === 204) {
         deletePlayerSuccess(id);
+        addToast({
+          title: 'Success',
+          subtitle: `Player ${id} was successfully deleted.`,
+          kind: 'success',
+        });
         if (players.length <= 1 && page > 1) {
           this.setState(
             prevState => ({
@@ -138,7 +161,11 @@ class PlayerTable extends PureComponent {
         }
         return response;
       }
-      throw new Error(`Player ${id} was not deleted.`);
+      addToast({
+        title: 'Error',
+        subtitle: `There was an error when deleting player ${id}.`,
+        kind: 'error',
+      });
     });
   }
 
@@ -259,6 +286,7 @@ PlayerTable.propTypes = {
   createPlayerSuccess: PropTypes.func.isRequired,
   editPlayerSuccess: PropTypes.func.isRequired,
   deletePlayerSuccess: PropTypes.func.isRequired,
+  addToast: PropTypes.func.isRequired,
 };
 
 export default connectAdvanced(dispatch => {
@@ -269,6 +297,7 @@ export default connectAdvanced(dispatch => {
       createPlayerSuccess,
       editPlayerSuccess,
       deletePlayerSuccess,
+      addToast,
     },
     dispatch
   );
