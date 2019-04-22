@@ -101,6 +101,9 @@ class PlayerModal extends PureComponent {
       item => item.code === country
     );
 
+    const shouldFilterItem = e =>
+      e.item.name.toLowerCase().includes(e.inputValue.toLowerCase());
+
     return (
       <Modal
         className="player-modal"
@@ -143,7 +146,7 @@ class PlayerModal extends PureComponent {
             itemToString={item => (item && item.name ? item.name : '')}
             placeholder="Filter..."
             onChange={e => this.handleCountryChange(e.selectedItem)}
-            shouldFilterItem={e => e.item.name.includes(e.inputValue)}
+            shouldFilterItem={shouldFilterItem}
           />
         </div>
         <TextInput
