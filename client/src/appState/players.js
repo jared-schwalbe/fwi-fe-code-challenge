@@ -2,11 +2,14 @@ import {
   CHANGE_PAGE,
   CHANGE_PAGE_SIZE,
   CHANGE_SORT,
+  BEGIN_LOADING,
+  DONE_LOADING,
   FETCH_PLAYERS_SUCCESS,
   EDIT_PLAYER_SUCCESS,
 } from './constants';
 
 const initialState = {
+  loading: false,
   page: 1,
   pageSize: 10,
   sortBy: null,
@@ -32,6 +35,16 @@ export default function players(state = initialState, action) {
         ...state,
         sortBy: action.payload.sort.sortBy,
         sortOrder: action.payload.sort.sortOrder,
+      };
+    case BEGIN_LOADING:
+      return {
+        ...state,
+        loading: true,
+      };
+    case DONE_LOADING:
+      return {
+        ...state,
+        loading: false,
       };
     case FETCH_PLAYERS_SUCCESS:
       return {
