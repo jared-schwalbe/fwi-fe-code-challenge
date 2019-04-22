@@ -4,8 +4,8 @@ import { connect } from 'react-redux';
 import {
   Button,
   DataTable,
+  DataTableSkeleton,
   PaginationV2,
-  Loading,
 } from 'carbon-components-react';
 
 import { COUNTRIES } from '../constants';
@@ -111,10 +111,6 @@ class PlayerTable extends PureComponent {
     } = this.props;
     const { playerToEdit, showPlayerModal } = this.state;
 
-    if (loading) {
-      return <Loading />;
-    }
-
     const headers = [
       { key: 'imageUrl', header: '', isSortable: false },
       { key: 'name', header: 'Player', isSortable: true },
@@ -132,56 +128,61 @@ class PlayerTable extends PureComponent {
             Add Player
           </Button>
         </div>
-        <DataTable
-          headers={headers}
-          render={({ getHeaderProps, headers, rows }) => (
-            <TableContainer>
-              <Table zebra={false}>
-                <TableHead>
-                  <TableRow>
-                    {headers.map(header => (
-                      <TableHeader
-                        {...getHeaderProps({
-                          header,
-                          onClick: evt =>
-                            this.handleCustomSort(evt, header.key),
-                        })}
-                        isSortable={header.isSortable && rows.length > 0}
-                        key={header.key}
-                      >
-                        {header.header}
-                      </TableHeader>
-                    ))}
-                    <TableHeader />
-                    <TableHeader />
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {rows.map(row => {
-                    const player = players.find(player => player.id === row.id);
-                    return (
-                      <PlayerTableRow
-                        cells={row.cells}
-                        key={row.id}
-                        onEdit={() => this.togglePlayerModal(true, player)}
-                        onDelete={() => deletePlayer(row.id)}
-                      />
-                    );
-                  })}
-                  {!rows.length && (
+        {loading && <DataTableSkeleton />}
+        {!loading && (
+          <DataTable
+            headers={headers}
+            render={({ getHeaderProps, headers, rows }) => (
+              <TableContainer>
+                <Table zebra={false}>
+                  <TableHead>
                     <TableRow>
-                      <TableCell className="player-table__empty" colSpan={6}>
-                        There are no poker players listed. Try adding one using
-                        the button above.
-                      </TableCell>
+                      {headers.map(header => (
+                        <TableHeader
+                          {...getHeaderProps({
+                            header,
+                            onClick: evt =>
+                              this.handleCustomSort(evt, header.key),
+                          })}
+                          isSortable={header.isSortable && rows.length > 0}
+                          key={header.key}
+                        >
+                          {header.header}
+                        </TableHeader>
+                      ))}
+                      <TableHeader />
+                      <TableHeader />
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-          rows={players}
-        />
+                  </TableHead>
+                  <TableBody>
+                    {rows.map(row => {
+                      const player = players.find(
+                        player => player.id === row.id
+                      );
+                      return (
+                        <PlayerTableRow
+                          cells={row.cells}
+                          key={row.id}
+                          onEdit={() => this.togglePlayerModal(true, player)}
+                          onDelete={() => deletePlayer(row.id)}
+                        />
+                      );
+                    })}
+                    {!rows.length && (
+                      <TableRow>
+                        <TableCell className="player-table__empty" colSpan={6}>
+                          There are no poker players listed. Try adding one
+                          using the button above.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+            rows={players}
+          />
+        )}
         {totalPlayers > 0 && (
           <PaginationV2
             onChange={this.handlePaginationChange}
