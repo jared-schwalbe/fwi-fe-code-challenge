@@ -23,6 +23,7 @@ const {
   Table,
   TableBody,
   TableRow,
+  TableCell,
   TableHead,
   TableHeader,
 } = DataTable;
@@ -311,13 +312,21 @@ class PlayerTable extends PureComponent {
                       />
                     );
                   })}
+                  {!rows.length && (
+                    <TableRow>
+                      <TableCell className="empty-body" colSpan={6}>
+                        There are no poker players listed. Try adding one using
+                        the button above.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
           )}
           rows={players}
         />
-        {totalPlayers && (
+        {Boolean(totalPlayers) && (
           <PaginationV2
             onChange={this.handlePaginationChange}
             page={page}
