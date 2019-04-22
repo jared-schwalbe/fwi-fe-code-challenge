@@ -326,7 +326,7 @@ class PlayerTable extends PureComponent {
           )}
           rows={players}
         />
-        {Boolean(totalPlayers) && (
+        {totalPlayers > 0 && (
           <PaginationV2
             onChange={this.handlePaginationChange}
             page={page}
