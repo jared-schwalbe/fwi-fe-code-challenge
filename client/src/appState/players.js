@@ -1,46 +1,27 @@
-import {
-  FETCH_PLAYERS_SUCCESS,
-  CREATE_PLAYER_SUCCESS,
-  EDIT_PLAYER_SUCCESS,
-  DELETE_PLAYER_SUCCESS,
-} from './constants';
+import { FETCH_PLAYERS_SUCCESS, EDIT_PLAYER_SUCCESS } from './constants';
 
-function mergePlayers(state, { players }) {
-  const newState = { ...state };
-  players.forEach(player => {
-    newState[player.id] = player;
-  });
-  return newState;
-}
+const initialState = {
+  players: [],
+  total: 0,
+};
 
-function createPlayer(state, player) {
-  const newState = { ...state };
-  newState[player.id] = player;
-  return newState;
-}
-
-function editPlayer(state, player) {
-  const newState = { ...state };
-  newState[player.id] = player;
-  return newState;
-}
-
-function removePlayer(state, id) {
-  const newState = { ...state };
-  delete newState[id];
-  return newState;
-}
-
-export default function players(state = {}, action) {
+export default function players(state = initialState, action) {
   switch (action.type) {
     case FETCH_PLAYERS_SUCCESS:
-      return mergePlayers(state, action.payload.data);
-    case CREATE_PLAYER_SUCCESS:
-      return createPlayer(state, action.payload.player);
+      return {
+        ...state,
+        players: action.payload.data.players,
+        total: action.payload.data.total,
+      };
     case EDIT_PLAYER_SUCCESS:
-      return editPlayer(state, action.payload.player);
-    case DELETE_PLAYER_SUCCESS:
-      return removePlayer(state, action.payload.id);
+      return {
+        ...state,
+        players: state.players.map(player =>
+          player.id === action.payload.player.id
+            ? action.payload.player
+            : player
+        ),
+      };
     default:
       return state;
   }

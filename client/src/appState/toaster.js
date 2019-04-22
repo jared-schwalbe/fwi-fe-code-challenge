@@ -9,6 +9,7 @@ export default function toaster(state = initialState, action) {
   switch (action.type) {
     case ADD_TOAST:
       return {
+        ...state,
         nextToastId: state.nextToastId + 1,
         toasts: [
           ...state.toasts,

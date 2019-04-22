@@ -1,16 +1,12 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import { bindActionCreators } from 'redux';
-import { connectAdvanced } from 'react-redux';
-import shallowEqual from 'shallowequal';
+import { connect } from 'react-redux';
 import { Button, DataTable, PaginationV2 } from 'carbon-components-react';
 
 import { COUNTRIES } from '../constants';
 import {
   fetchPlayersSuccess,
-  createPlayerSuccess,
   editPlayerSuccess,
-  deletePlayerSuccess,
   addToast,
 } from '../appState/actions';
 
@@ -81,6 +77,8 @@ class PlayerTable extends PureComponent {
         if (data) {
           fetchPlayersSuccess(data);
           return data;
+        } else {
+          throw new Error('There was an error when fetching the players list.');
         }
       })
       .catch(error => {
@@ -93,7 +91,7 @@ class PlayerTable extends PureComponent {
   }
 
   createPlayer(player) {
-    const { createPlayerSuccess, addToast } = this.props;
+    const { addToast } = this.props;
 
     fetch(`http://localhost:3001/players`, {
       headers: {
@@ -105,20 +103,16 @@ class PlayerTable extends PureComponent {
     })
       .then(response => {
         if (response.status === 201) {
-          return response.json();
+          addToast({
+            title: 'Success',
+            subtitle: 'New player was successfully added.',
+            kind: 'success',
+          });
+          this.fetchPlayers();
+          return response;
         } else {
           throw new Error('There was an error when adding a new player.');
         }
-      })
-      .then(data => {
-        createPlayerSuccess(data);
-        addToast({
-          title: 'Success',
-          subtitle: 'New player was successfully added.',
-          kind: 'success',
-        });
-        this.fetchPlayers();
-        return data;
       })
       .catch(error => {
         addToast({
@@ -164,13 +158,12 @@ class PlayerTable extends PureComponent {
   }
 
   deletePlayer(id) {
-    const { deletePlayerSuccess, players, addToast } = this.props;
+    const { players, addToast } = this.props;
     const { page } = this.state;
 
     fetch(`http://localhost:3001/players/${id}`, { method: 'DELETE' })
       .then(response => {
         if (response.status === 204) {
-          deletePlayerSuccess(id);
           addToast({
             title: 'Success',
             subtitle: `Player ${id} was successfully deleted.`,
@@ -215,7 +208,7 @@ class PlayerTable extends PureComponent {
     } else if (arrow.includes('descending')) {
       sortOrder = 'desc';
     } else {
-      return null;
+      return;
     }
 
     this.setState(
@@ -271,7 +264,9 @@ class PlayerTable extends PureComponent {
     return (
       <div className="player-table">
         <div className="player-table__toolbar">
-          <span className="title">Poker Players Table</span>
+          <span className="player-table__toolbar__title">
+            Poker Players Table
+          </span>
           <Button onClick={() => this.togglePlayerModal(true)}>
             Add Player
           </Button>
@@ -314,7 +309,7 @@ class PlayerTable extends PureComponent {
                   })}
                   {!rows.length && (
                     <TableRow>
-                      <TableCell className="empty-body" colSpan={6}>
+                      <TableCell className="player-table__empty" colSpan={6}>
                         There are no poker players listed. Try adding one using
                         the button above.
                       </TableCell>
@@ -359,35 +354,18 @@ PlayerTable.propTypes = {
   ).isRequired,
   totalPlayers: PropTypes.number.isRequired,
   fetchPlayersSuccess: PropTypes.func.isRequired,
-  createPlayerSuccess: PropTypes.func.isRequired,
   editPlayerSuccess: PropTypes.func.isRequired,
-  deletePlayerSuccess: PropTypes.func.isRequired,
   addToast: PropTypes.func.isRequired,
 };
 
-export default connectAdvanced(dispatch => {
-  let result;
-  const actions = bindActionCreators(
-    {
-      fetchPlayersSuccess,
-      createPlayerSuccess,
-      editPlayerSuccess,
-      deletePlayerSuccess,
-      addToast,
-    },
-    dispatch
-  );
-
-  return (state, props) => {
-    const players = state.playerIds.map(id => state.players[id]);
-    const totalPlayers = state.totalPlayers;
-
-    const nextResult = { ...props, ...actions, players, totalPlayers };
-
-    if (!shallowEqual(result, nextResult)) {
-      result = nextResult;
-    }
-
-    return result;
-  };
-})(PlayerTable);
+export default connect(
+  store => ({
+    players: store.players.players,
+    totalPlayers: store.players.total,
+  }),
+  dispatch => ({
+    fetchPlayersSuccess: data => dispatch(fetchPlayersSuccess(data)),
+    editPlayerSuccess: player => dispatch(editPlayerSuccess(player)),
+    addToast: options => dispatch(addToast(options)),
+  })
+)(PlayerTable);
