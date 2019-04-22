@@ -2,8 +2,6 @@ import {
   CHANGE_PAGE,
   CHANGE_PAGE_SIZE,
   CHANGE_SORT,
-  BEGIN_LOADING,
-  DONE_LOADING,
   FETCH_PLAYERS_SUCCESS,
   EDIT_PLAYER_SUCCESS,
   ADD_TOAST,
@@ -14,9 +12,8 @@ const BASE_URL = 'http://localhost:3001';
 
 export function fetchPlayers() {
   return (dispatch, getState) => {
-    dispatch(beginLoading());
-
     const { page, pageSize, sortBy, sortOrder } = getState().players;
+
     const size = pageSize;
     const from = pageSize * (page - 1);
     let url = `${BASE_URL}/players?size=${size}&from=${from}`;
@@ -54,17 +51,12 @@ export function fetchPlayers() {
             kind: 'error',
           })
         );
-      })
-      .finally(() => {
-        dispatch(doneLoading());
       });
   };
 }
 
 export function createPlayer(player) {
   return (dispatch, getState) => {
-    dispatch(beginLoading());
-
     const options = {
       headers: {
         Accept: 'application/json',
@@ -98,17 +90,12 @@ export function createPlayer(player) {
             kind: 'error',
           })
         );
-      })
-      .finally(() => {
-        dispatch(doneLoading());
       });
   };
 }
 
 export function editPlayer(player) {
   return dispatch => {
-    dispatch(beginLoading());
-
     const options = {
       headers: {
         'Content-Type': 'application/json',
@@ -143,17 +130,12 @@ export function editPlayer(player) {
             kind: 'error',
           })
         );
-      })
-      .finally(() => {
-        dispatch(doneLoading());
       });
   };
 }
 
 export function deletePlayer(id) {
   return (dispatch, getState) => {
-    dispatch(beginLoading());
-
     const { players, page } = getState().players;
 
     fetch(`${BASE_URL}/players/${id}`, { method: 'DELETE' })
@@ -183,9 +165,6 @@ export function deletePlayer(id) {
             kind: 'error',
           })
         );
-      })
-      .finally(() => {
-        dispatch(doneLoading());
       });
   };
 }
@@ -200,14 +179,6 @@ export function changePageSize(pageSize) {
 
 export function changeSort(sort) {
   return { type: CHANGE_SORT, payload: { sort } };
-}
-
-export function beginLoading() {
-  return { type: BEGIN_LOADING };
-}
-
-export function doneLoading() {
-  return { type: DONE_LOADING };
 }
 
 export function fetchPlayersSuccess(data) {

@@ -1,12 +1,7 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import {
-  Button,
-  DataTable,
-  PaginationV2,
-  Loading,
-} from 'carbon-components-react';
+import { Button, DataTable, PaginationV2 } from 'carbon-components-react';
 
 import { COUNTRIES } from '../constants';
 import {
@@ -101,19 +96,8 @@ class PlayerTable extends PureComponent {
   }
 
   render() {
-    const {
-      loading,
-      page,
-      pageSize,
-      players,
-      totalPlayers,
-      deletePlayer,
-    } = this.props;
+    const { page, pageSize, players, totalPlayers, deletePlayer } = this.props;
     const { playerToEdit, showPlayerModal } = this.state;
-
-    if (loading) {
-      return <Loading />;
-    }
 
     const headers = [
       { key: 'imageUrl', header: '', isSortable: false },
@@ -204,7 +188,6 @@ class PlayerTable extends PureComponent {
 }
 
 PlayerTable.propTypes = {
-  loading: PropTypes.bool.isRequired,
   page: PropTypes.number.isRequired,
   pageSize: PropTypes.number.isRequired,
   sortBy: PropTypes.string,
@@ -226,7 +209,6 @@ PlayerTable.propTypes = {
 
 export default connect(
   store => ({
-    loading: store.players.loading,
     page: store.players.page,
     pageSize: store.players.pageSize,
     sortBy: store.players.sortBy,
