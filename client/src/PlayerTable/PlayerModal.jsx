@@ -97,6 +97,10 @@ class PlayerModal extends PureComponent {
     const { onClose, player } = this.props;
     const { name, winnings, country, imageUrl, invalidValues } = this.state;
 
+    const selectedCountry = this.countryItems.find(
+      item => item.code === country
+    );
+
     return (
       <Modal
         className="player-modal"
@@ -132,9 +136,7 @@ class PlayerModal extends PureComponent {
           <FormLabel>Country</FormLabel>
           <ComboBox
             className="player-modal__country"
-            initialSelectedItem={this.countryItems.find(
-              c => c.code === country
-            )}
+            initialSelectedItem={selectedCountry}
             invalid={Boolean(invalidValues.country)}
             invalidText={invalidValues.country}
             items={this.countryItems}

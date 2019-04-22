@@ -27,16 +27,16 @@ $header-height: 3rem;
     display: flex;
     height: 100%;
 
-    .avatar {
+    > .avatar {
       margin-right: 0.5rem;
     }
   }
 
   td {
     padding: 0.5rem 2rem 0.5rem 0.75rem;
-  }
 
-  td:nth-child(2) {
-    width: 100%;
+    &:nth-child(2) {
+      width: 100%;
+    }
   }
 }

@@ -54,7 +54,7 @@ class PlayerTable extends PureComponent {
   }
 
   fetchPlayers() {
-    const { fetchPlayersSuccess } = this.props;
+    const { fetchPlayersSuccess, addToast } = this.props;
     const { pageSize, page, sortBy, sortOrder } = this.state;
 
     const size = pageSize;
@@ -70,14 +70,24 @@ class PlayerTable extends PureComponent {
       },
     })
       .then(response => {
-        return response.json();
+        if (response.status === 200) {
+          return response.json();
+        } else {
+          throw new Error('There was an error when fetching the players list.');
+        }
       })
       .then(data => {
         if (data) {
           fetchPlayersSuccess(data);
           return data;
         }
-        throw new Error(data.message);
+      })
+      .catch(error => {
+        addToast({
+          title: 'Error',
+          subtitle: error.toString(),
+          kind: 'error',
+        });
       });
   }
 
@@ -95,24 +105,26 @@ class PlayerTable extends PureComponent {
       .then(response => {
         if (response.status === 201) {
           return response.json();
+        } else {
+          throw new Error('There was an error when adding a new player.');
         }
-        addToast({
-          title: 'Error',
-          subtitle: 'There was an error when adding a new player.',
-          kind: 'error',
-        });
       })
       .then(data => {
-        if (data) {
-          createPlayerSuccess(data);
-          addToast({
-            title: 'Success',
-            subtitle: 'New player was successfully added.',
-            kind: 'success',
-          });
-          this.fetchPlayers();
-          return data;
-        }
+        createPlayerSuccess(data);
+        addToast({
+          title: 'Success',
+          subtitle: 'New player was successfully added.',
+          kind: 'success',
+        });
+        this.fetchPlayers();
+        return data;
+      })
+      .catch(error => {
+        addToast({
+          title: 'Error',
+          subtitle: error.toString(),
+          kind: 'error',
+        });
       });
   }
 
@@ -125,56 +137,67 @@ class PlayerTable extends PureComponent {
       },
       method: 'PATCH',
       body: JSON.stringify(player),
-    }).then(response => {
-      if (response.status === 200) {
-        editPlayerSuccess(player);
+    })
+      .then(response => {
+        if (response.status === 200) {
+          editPlayerSuccess(player);
+          addToast({
+            title: 'Success',
+            subtitle: `Player ${player.id} was successfully updated.`,
+            kind: 'success',
+          });
+          return response;
+        } else {
+          throw new Error(
+            `There was an error when updating player ${player.id}.`
+          );
+        }
+      })
+      .catch(error => {
         addToast({
-          title: 'Success',
-          subtitle: `Player ${player.id} was successfully updated.`,
-          kind: 'success',
+          title: 'Error',
+          subtitle: error.toString(),
+          kind: 'error',
         });
-        return response;
-      }
-      addToast({
-        title: 'Error',
-        subtitle: `There was an error when updating player ${player.id}.`,
-        kind: 'error',
       });
-    });
   }
 
   deletePlayer(id) {
     const { deletePlayerSuccess, players, addToast } = this.props;
     const { page } = this.state;
 
-    fetch(`http://localhost:3001/players/${id}`, {
-      method: 'DELETE',
-    }).then(response => {
-      if (response.status === 204) {
-        deletePlayerSuccess(id);
-        addToast({
-          title: 'Success',
-          subtitle: `Player ${id} was successfully deleted.`,
-          kind: 'success',
-        });
-        if (players.length <= 1 && page > 1) {
-          this.setState(
-            prevState => ({
-              page: prevState.page - 1,
-            }),
-            () => this.fetchPlayers()
-          );
+    fetch(`http://localhost:3001/players/${id}`, { method: 'DELETE' })
+      .then(response => {
+        if (response.status === 204) {
+          deletePlayerSuccess(id);
+          addToast({
+            title: 'Success',
+            subtitle: `Player ${id} was successfully deleted.`,
+            kind: 'success',
+          });
+          if (players.length <= 1 && page > 1) {
+            // go to the previous page if the last one is now empty
+            this.setState(
+              prevState => ({
+                page: prevState.page - 1,
+              }),
+              () => this.fetchPlayers()
+            );
+          } else {
+            this.fetchPlayers();
+          }
+          return response;
         } else {
-          this.fetchPlayers();
+          throw new Error(`There was an error when deleting player ${id}.`);
         }
-        return response;
-      }
-      addToast({
-        title: 'Error',
-        subtitle: `There was an error when deleting player ${id}.`,
-        kind: 'error',
+      })
+      .catch(error => {
+        addToast({
+          title: 'Error',
+          subtitle: error.toString(),
+          kind: 'error',
+        });
       });
-    });
   }
 
   // the DataTable doesn't really allow server side sorting so we'll
@@ -206,7 +229,14 @@ class PlayerTable extends PureComponent {
 
   handlePaginationChange(event) {
     const { page, pageSize } = event;
-    this.setState({ page, pageSize }, () => this.fetchPlayers());
+
+    this.setState(
+      {
+        page,
+        pageSize,
+      },
+      () => this.fetchPlayers()
+    );
   }
 
   togglePlayerModal(show, player = null) {

@@ -1,6 +1,5 @@
 import {
   FETCH_PLAYERS_SUCCESS,
-  EDIT_PLAYER_SUCCESS,
   CREATE_PLAYER_SUCCESS,
   DELETE_PLAYER_SUCCESS,
 } from './constants';
@@ -11,8 +10,6 @@ export default function totalPlayers(state = 0, action) {
       return action.payload.data.total;
     case CREATE_PLAYER_SUCCESS:
       return state++;
-    case EDIT_PLAYER_SUCCESS:
-      return state;
     case DELETE_PLAYER_SUCCESS:
       return state--;
     default:
