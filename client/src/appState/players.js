@@ -1,12 +1,38 @@
-import { FETCH_PLAYERS_SUCCESS, EDIT_PLAYER_SUCCESS } from './constants';
+import {
+  CHANGE_PAGE,
+  CHANGE_PAGE_SIZE,
+  CHANGE_SORT,
+  FETCH_PLAYERS_SUCCESS,
+  EDIT_PLAYER_SUCCESS,
+} from './constants';
 
 const initialState = {
+  page: 1,
+  pageSize: 10,
+  sortBy: null,
+  sortOrder: null,
   players: [],
   total: 0,
 };
 
 export default function players(state = initialState, action) {
   switch (action.type) {
+    case CHANGE_PAGE:
+      return {
+        ...state,
+        page: action.payload.page,
+      };
+    case CHANGE_PAGE_SIZE:
+      return {
+        ...state,
+        pageSize: action.payload.pageSize,
+      };
+    case CHANGE_SORT:
+      return {
+        ...state,
+        sortBy: action.payload.sort.sortBy,
+        sortOrder: action.payload.sort.sortOrder,
+      };
     case FETCH_PLAYERS_SUCCESS:
       return {
         ...state,

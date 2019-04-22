@@ -5,8 +5,13 @@ import { Button, DataTable, PaginationV2 } from 'carbon-components-react';
 
 import { COUNTRIES } from '../constants';
 import {
-  fetchPlayersSuccess,
-  editPlayerSuccess,
+  changePage,
+  changePageSize,
+  changeSort,
+  fetchPlayers,
+  createPlayer,
+  editPlayer,
+  deletePlayer,
   addToast,
 } from '../appState/actions';
 
@@ -28,175 +33,27 @@ class PlayerTable extends PureComponent {
   constructor(props) {
     super(props);
 
-    this.createPlayer = this.createPlayer.bind(this);
-    this.editPlayer = this.editPlayer.bind(this);
-    this.deletePlayer = this.deletePlayer.bind(this);
-    this.handlePaginationChange = this.handlePaginationChange.bind(this);
     this.handleCustomSort = this.handleCustomSort.bind(this);
+    this.handlePaginationChange = this.handlePaginationChange.bind(this);
     this.togglePlayerModal = this.togglePlayerModal.bind(this);
     this.submitModal = this.submitModal.bind(this);
 
     this.state = {
-      page: 1,
-      pageSize: 10,
-      sortBy: null,
-      sortOrder: null,
       playerToEdit: null,
       showPlayerModal: false,
     };
   }
 
   componentDidMount() {
-    this.fetchPlayers();
-  }
-
-  fetchPlayers() {
-    const { fetchPlayersSuccess, addToast } = this.props;
-    const { pageSize, page, sortBy, sortOrder } = this.state;
-
-    const size = pageSize;
-    const from = pageSize * (page - 1);
-    let url = `http://localhost:3001/players?size=${size}&from=${from}`;
-    if (sortBy && sortOrder) {
-      url += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
-    }
-
-    fetch(url, {
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-      .then(response => {
-        if (response.status === 200) {
-          return response.json();
-        } else {
-          throw new Error('There was an error when fetching the players list.');
-        }
-      })
-      .then(data => {
-        if (data) {
-          fetchPlayersSuccess(data);
-          return data;
-        } else {
-          throw new Error('There was an error when fetching the players list.');
-        }
-      })
-      .catch(error => {
-        addToast({
-          title: 'Error',
-          subtitle: error.toString(),
-          kind: 'error',
-        });
-      });
-  }
-
-  createPlayer(player) {
-    const { addToast } = this.props;
-
-    fetch(`http://localhost:3001/players`, {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify(player),
-    })
-      .then(response => {
-        if (response.status === 201) {
-          addToast({
-            title: 'Success',
-            subtitle: 'New player was successfully added.',
-            kind: 'success',
-          });
-          this.fetchPlayers();
-          return response;
-        } else {
-          throw new Error('There was an error when adding a new player.');
-        }
-      })
-      .catch(error => {
-        addToast({
-          title: 'Error',
-          subtitle: error.toString(),
-          kind: 'error',
-        });
-      });
-  }
-
-  editPlayer(player) {
-    const { editPlayerSuccess, addToast } = this.props;
-
-    fetch(`http://localhost:3001/players/${player.id}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'PATCH',
-      body: JSON.stringify(player),
-    })
-      .then(response => {
-        if (response.status === 200) {
-          editPlayerSuccess(player);
-          addToast({
-            title: 'Success',
-            subtitle: `Player ${player.id} was successfully updated.`,
-            kind: 'success',
-          });
-          return response;
-        } else {
-          throw new Error(
-            `There was an error when updating player ${player.id}.`
-          );
-        }
-      })
-      .catch(error => {
-        addToast({
-          title: 'Error',
-          subtitle: error.toString(),
-          kind: 'error',
-        });
-      });
-  }
-
-  deletePlayer(id) {
-    const { players, addToast } = this.props;
-    const { page } = this.state;
-
-    fetch(`http://localhost:3001/players/${id}`, { method: 'DELETE' })
-      .then(response => {
-        if (response.status === 204) {
-          addToast({
-            title: 'Success',
-            subtitle: `Player ${id} was successfully deleted.`,
-            kind: 'success',
-          });
-          if (players.length <= 1 && page > 1) {
-            // go to the previous page if the last one is now empty
-            this.setState(
-              prevState => ({
-                page: prevState.page - 1,
-              }),
-              () => this.fetchPlayers()
-            );
-          } else {
-            this.fetchPlayers();
-          }
-          return response;
-        } else {
-          throw new Error(`There was an error when deleting player ${id}.`);
-        }
-      })
-      .catch(error => {
-        addToast({
-          title: 'Error',
-          subtitle: error.toString(),
-          kind: 'error',
-        });
-      });
+    const { fetchPlayers } = this.props;
+    fetchPlayers();
   }
 
   // the DataTable doesn't really allow server side sorting so we'll
   // hack it by fetching based on the arrow direction
   handleCustomSort(evt, sortBy) {
+    const { changePage, changeSort, fetchPlayers } = this.props;
+
     const arrow = evt.target
       .closest('[aria-sort]')
       .getElementsByClassName('bx--table-sort-v2__icon')[0]
@@ -211,26 +68,17 @@ class PlayerTable extends PureComponent {
       return;
     }
 
-    this.setState(
-      {
-        page: 1,
-        sortBy,
-        sortOrder,
-      },
-      () => this.fetchPlayers()
-    );
+    changePage(1);
+    changeSort({ sortBy, sortOrder });
+    fetchPlayers();
   }
 
   handlePaginationChange(event) {
-    const { page, pageSize } = event;
+    const { changePage, changePageSize, fetchPlayers } = this.props;
 
-    this.setState(
-      {
-        page,
-        pageSize,
-      },
-      () => this.fetchPlayers()
-    );
+    changePage(event.page);
+    changePageSize(event.pageSize);
+    fetchPlayers();
   }
 
   togglePlayerModal(show, player = null) {
@@ -241,18 +89,15 @@ class PlayerTable extends PureComponent {
   }
 
   submitModal(player) {
+    const { createPlayer, editPlayer } = this.props;
     const { playerToEdit } = this.state;
 
-    if (playerToEdit) {
-      this.editPlayer(player);
-    } else {
-      this.createPlayer(player);
-    }
+    playerToEdit ? editPlayer(player) : createPlayer(player);
   }
 
   render() {
-    const { players, totalPlayers } = this.props;
-    const { page, pageSize, playerToEdit, showPlayerModal } = this.state;
+    const { page, pageSize, players, totalPlayers, deletePlayer } = this.props;
+    const { playerToEdit, showPlayerModal } = this.state;
 
     const headers = [
       { key: 'imageUrl', header: '', isSortable: false },
@@ -303,7 +148,7 @@ class PlayerTable extends PureComponent {
                         cells={row.cells}
                         key={row.id}
                         onEdit={() => this.togglePlayerModal(true, player)}
-                        onDelete={() => this.deletePlayer(row.id)}
+                        onDelete={() => deletePlayer(row.id)}
                       />
                     );
                   })}
@@ -343,6 +188,10 @@ class PlayerTable extends PureComponent {
 }
 
 PlayerTable.propTypes = {
+  page: PropTypes.number.isRequired,
+  pageSize: PropTypes.number.isRequired,
+  sortBy: PropTypes.string,
+  sortOrder: PropTypes.string,
   players: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
@@ -353,19 +202,28 @@ PlayerTable.propTypes = {
     })
   ).isRequired,
   totalPlayers: PropTypes.number.isRequired,
-  fetchPlayersSuccess: PropTypes.func.isRequired,
-  editPlayerSuccess: PropTypes.func.isRequired,
+  fetchPlayers: PropTypes.func.isRequired,
+  createPlayer: PropTypes.func.isRequired,
   addToast: PropTypes.func.isRequired,
 };
 
 export default connect(
   store => ({
+    page: store.players.page,
+    pageSize: store.players.pageSize,
+    sortBy: store.players.sortBy,
+    sortOrder: store.players.sortOrder,
     players: store.players.players,
     totalPlayers: store.players.total,
   }),
   dispatch => ({
-    fetchPlayersSuccess: data => dispatch(fetchPlayersSuccess(data)),
-    editPlayerSuccess: player => dispatch(editPlayerSuccess(player)),
+    changePage: page => dispatch(changePage(page)),
+    changePageSize: pageSize => dispatch(changePageSize(pageSize)),
+    changeSort: sort => dispatch(changeSort(sort)),
+    fetchPlayers: options => dispatch(fetchPlayers(options)),
+    editPlayer: player => dispatch(editPlayer(player)),
+    createPlayer: player => dispatch(createPlayer(player)),
+    deletePlayer: id => dispatch(deletePlayer(id)),
     addToast: options => dispatch(addToast(options)),
   })
 )(PlayerTable);
